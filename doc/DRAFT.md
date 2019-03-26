@@ -36,16 +36,16 @@ The following is an example of an not-signed order:
 ```json
 {
 
-    type: "alias/...",
+    "type": "alias/...",
 
     // optional. date when this order was edited
-    edit_date: "2019-03-25T11:18:23.405759"
+    "edit_date": "2019-03-25T11:18:23.405759"
 
     // optional. once signed, order expires in 1hour
-    expires_in: 3600,
+    "expires_in": 3600,
 
-    fielda: valuea,
-    fieldb: valueb,
+    "fielda": valuea,
+    "fieldb": valueb,
     ...
 }
 ```
@@ -55,16 +55,16 @@ the signature date and the signature proof. Here's an example of a signed order:
 
 ```json
 {
-    type: "alias/...",
+    "type": "alias/...",
 
-    fielda: valuea,
-    fieldb: valueb,
+    "fielda": valuea,
+    "fieldb": valueb,
     ...
 
-    _sig: {
-      date: "2019-03-25T11:18:23.405759",
-      signer: "ed25519:qfwK28+xFAE7vbBbqQXMgAwgBtz0TI+/ONgsfzaAe4g="
-      proof: "LJzLAyjZhW3BZJcjx/nGMmkaz+acbdcHlTwv1PntP2rlhOiwAA0LpfeUTZVmGUAGqkWXfPKgBY8QA69oRcuzDg==",
+    "_sig": {
+      "date": "2019-03-25T11:18:23.405759",
+      "signer": "ed25519:qfwK28+xFAE7vbBbqQXMgAwgBtz0TI+/ONgsfzaAe4g="
+      "proof": "LJzLAyjZhW3BZJcjx/nGMmkaz+acbdcHlTwv1PntP2rlhOiwAA0LpfeUTZVmGUAGqkWXfPKgBY8QA69oRcuzDg==",
     }
 }
 ```
@@ -73,23 +73,23 @@ Following orders link to the previous (signed) orders.
 
 ```json
 {
-    type: "alias/order2",
-    following: {
-        type: "alias/order1",
-        expires_in: 3600,
+    "type": "alias/order2",
+    "following": {
+        "type": "alias/order1",
+        "expires_in": 3600,
 
-        fielda: valuea,
-        fieldb: valueb,
+        "fielda": valuea,
+        "fieldb": valueb,
         ...
 
-        _sig: { ... }
+        "_sig": { ... }
     },
 
-    fielda: valuea,
-    fieldb: valueb,
+    "fielda": valuea,
+    "fieldb": valueb,
     ...
 
-    _sig: { ... }
+    "_sig": { ... }
 }
 ```
 
@@ -119,16 +119,16 @@ H(["foo", 42, "bar", ...]) = H(
 
 // root hash of dict: hash of the 2-hashes of the concatenation of keys (sorted
 // alphabetically if not stated otherwise) and values' hashes
-H({qux: 42, foo: "bar", ...}) = H(
+H({"qux": 42, "foo": "bar", ...}) = H(
     H(H("foo") ⊕ H("qux") ⊕ ...) ⊕
     H(H("bar") ⊕ H(42) ⊕ ...)
 )
 
 // CRYPTOSIGN may be any assymetric cryptographic signature algorithm.
 S(order, date, sk) = CRYPTOSIGN(sk, H({
-    order: order,
-    date: date,
-    signer: PUBLICKEY(sk),
+    "order": order,
+    "date": date,
+    "signer": PUBLICKEY(sk),
 }))
 
 // An signed order is built from the to-be signed order as such
@@ -136,19 +136,19 @@ S(order, date, sk) = CRYPTOSIGN(sk, H({
 //     let date = now()
 //     let proof = S(order, date, sk)
 //     order._sig = {
-//         date: date,
-//         signer: PUBLICKEY(sk),
-//         proof: proof,
+//         "date": date,
+//         "signer": PUBLICKEY(sk),
+//         "proof": proof,
 //     }
 // }
 }
 
 // root hash of signed order
-H({_sig: signature, foo: "bar", ...}) = H(
+H({"_sig": signature, "foo": "bar", ...}) = H(
     signature.proof ⊕ H({
-        order: { foo: "bar", ... },
-        date: signature.date,
-        signer: signature.signer,
+        "order": { "foo": "bar", ... },
+        "date": signature.date,
+        "signer": signature.signer,
     })
 )
 ```
@@ -186,8 +186,8 @@ linked to the order to be revoked.
 
 ```json
 {
-    type: "alias/revokation",
-    revoke: { ... } // order to be revokde.
+    "type": "alias/revokation",
+    "revoke": { ... } // order to be revokde.
 }
 ```
 
@@ -278,14 +278,14 @@ Each client edits an order `alias/client_registration` as follow:
 
 ```json
 {
-    type: "alias/client_registration",
-    client_id: "qfwK28+xFAE7vbBbqQXMgAwgBtz0TI+/ONgsfzaAe4g=",
-    desc: "A sample Alias client for testing purpose.",
-    expires_in: 3600,
-    name: "Sample Alias client",
-    redirect_uri: "https://alias.client.com/alias/cb",
-    url: "https://alias.client.com/"
-    _sig: { ... },
+    "type": "alias/client_registration",
+    "client_id": "qfwK28+xFAE7vbBbqQXMgAwgBtz0TI+/ONgsfzaAe4g=",
+    "desc": "A sample Alias client for testing purpose.",
+    "expires_in": 3600,
+    "name": "Sample Alias client",
+    "redirect_uri": "https://alias.client.com/alias/cb",
+    "url": "https://alias.client.com/"
+    "_sig": { ... },
 },
 ```
 
@@ -324,11 +324,11 @@ is the order `alias/authorization_request` signed with the owner's key:
 
 ```json
 {
-    type: "alias/authorization_request",
-    response_type: "code",
-    expires_in: 600,    // 10min (max). defined in OAuth 2.0
-    scope: ["google.photos.*"]
-    _sig: { signer: <owner public key>, ... }
+    "type": "alias/authorization_request",
+    "response_type": "code",
+    "expires_in": 600,    // 10min (max). defined in OAuth 2.0
+    "scope": ["google.photos.*"]
+    "_sig": { "signer": <owner public key>, ... }
 }
 ```
 
@@ -356,17 +356,17 @@ authorization server's key:
 
 ```json
 {
-    type: "alias/access",
-    authorization_request: {
-        type: "alias/authorization_request",
-        response_type: "code",
-        expires_in: 600,    // 10min (max). defined in OAuth 2.0
-        scope: ["google.photos.*"]
-        _sig: { signer: <owner public key>, ... }
+    "type": "alias/access",
+    "authorization_request": {
+        "type": "alias/authorization_request",
+        "response_type": "code",
+        "expires_in": 600,    // 10min (max). defined in OAuth 2.0
+        "scope": ["google.photos.*"]
+        "_sig": { "signer": <owner public key>, ... }
     },
-    expires_in: 3600,   // 1h, depends on the access token lifetime
-    scope: ["google.photos.*"]
-    _sig: { signer: <authorization server public key>, ... }
+    "expires_in": 3600,   // 1h, depends on the access token lifetime
+    "scope": ["google.photos.*"]
+    "_sig": { "signer": <authorization server public key>, ... }
 }
 ```
 
@@ -379,15 +379,15 @@ with the authorization server's key (too).
 
 ```json
 {
-    type: "alias/refresh",
-    authorization_request: {
-        type: "alias/authorization_request",
-        response_type: "code",
-        expires_in: 600,    // 10min (max). defined in OAuth 2.0
-        scope: ["google.photos.*"]
-        _sig: { signer: <owner public key>, ... }
+    "type": "alias/refresh",
+    "authorization_request": {
+        "type": "alias/authorization_request",
+        "response_type": "code",
+        "expires_in": 600,    // 10min (max). defined in OAuth 2.0
+        "scope": ["google.photos.*"]
+        "_sig": { "signer": <owner public key>, ... }
     },
-    _sig: { signer: <authorization server public key>, ... }
+    "_sig": { "signer": <authorization server public key>, ... }
 }
 ```
 
