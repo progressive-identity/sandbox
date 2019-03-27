@@ -285,6 +285,10 @@ Each client edits an order `alias/client_registration` as follow:
     "name": "Sample Alias client",
     "redirect_uri": "https://alias.client.com/alias/cb",
     "url": "https://alias.client.com/"
+    "root_certificates": [
+        <client root certificate #1>,
+        ...
+    ]
     "_sig": { ... },
 },
 ```
@@ -365,7 +369,7 @@ authorization server's key:
         "_sig": { "signer": <owner public key>, ... }
     },
     "expires_in": 3600,   // 1h, depends on the access token lifetime
-    "scope": ["google.photos.*"]
+    "scope": ["google.photos.*"],
     "_sig": { "signer": <authorization server public key>, ... }
 }
 ```
@@ -384,7 +388,7 @@ with the authorization server's key (too).
         "type": "alias/authorization_request",
         "response_type": "code",
         "expires_in": 600,    // 10min (max). defined in OAuth 2.0
-        "scope": ["google.photos.*"]
+        "scope": ["google.photos.*"],
         "_sig": { "signer": <owner public key>, ... }
     },
     "_sig": { "signer": <authorization server public key>, ... }
@@ -400,7 +404,34 @@ Same than OAuth 2.0
 
 ## Resource access
 
-XXX
+A client with the right access token can access the resources in the scope
+specified by the token.
+
+To do so, a client needs to proove two facts:
+
+1. it owns a valid access token;
+2. it is authentified as the right party granted by the access token.
+
+### TLS with Client authentication
+
+A client connects to the resource server authenticating with a client
+certificate. A client certificate is valid if
+
+1. it is chained to a certificate whitelisted in the client registration order;
+2. it is chained to a root certificate whose public key is the client public
+   key.
+
+Once the TLS connection established, a normal HTTP request will be performed by
+the client with a `Bearer` being the access token. At this stage, the resource
+server is able to determine the resources accessible by the client.
+
+### TLS with no client authentication
+
+In some situation, the client may not perform a TLS session with a client
+certificate (e.g. a brower which does not have this certificate). In this case,
+the client needs to authenticate itself through a HTTP authentication scheme to
+be defined. This precise scheme has not been yet implemented, but should be able
+to proove the client owns the right private assymetric key.
 
 [merkle_tree]: https://en.wikipedia.org/wiki/Merkle_tree
 [msgpack]: https://msgpack.org/
