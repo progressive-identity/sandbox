@@ -1,0 +1,136 @@
+This document presents briefly core concepts of Alias.
+
+Alias is a decentralized protocol based on OAuth 2.0 to let clients access
+resources.
+
+## Parties
+
+- User: owns resources. Identified by its alias, formed as
+  username@authorization.server.
+
+- Client: software willing to access an user's resources.
+
+- Authorization server: represents the user in the Alias ecosystem. It receives
+  client's requests to access a managed user's resources and confirm its
+  approval. It provides access&refresh tokens to access resources. It may store
+  the user's private key, in which case it is trusted by the user.
+
+- Resource server: serves the user's resources. It handles resource R/W
+  requests.
+
+Each party has a pair of asymmetric keys (currently, ed25519 - preferred - or
+secp256k1), called their "root keys".
+
+## Orders
+
+Orders are contracts to assert decentralizedly that a party agreed with its
+content. It is represented as a JSON-compatible dictionary, with a key 'type'
+specifying its class (e.g. {type: "alias/example": foo: {"bar": [42]}}). Each
+order is uniquely identified by their "root hash", the root hash of the order
+casted as a merkle tree (Ethereum's smart-contract flavor). An order is signed
+by a party's root key, or party's subkeys (see "Key rotation"). A order's
+signature stores the signature's date and an optional expiration date.
+
+An order is expired when:
+
+1. its optional expiration date is in the past OR
+2. it or any order it (recursively) references has its signature's expiration
+   date in the past OR
+3. it or any order it (recursively) references is revoked (see "Revocation")
+
+An order is valid when (1) it is not expired AND (2) its signature's date is in
+the past.
+
+Tokens are the Base64 form of the MessagePack serialization of orders. Valid
+tokens are valid orders. Only valid tokens are accepted by parties.
+
+### Key rotation
+
+A subkey is a pair of asymmetric keys signed by a party's root key. It is
+declared as an order of type "alias/key", signed by the party's root key. They
+are used to sign every orders except subkeys' and revocations'. A party rotates
+its subkey(s) every hour.
+
+### Revocations
+
+Orders are revoked by order of type "alias/revoke", referencing the revoked
+order's root hash and signed by the revoked order's root key.
+
+The revoking party perform a best-effort to contact every other concerned
+parties ("revoking" status), until the revocation is known from all of them
+("revoked" status).
+
+Blockchains may be used as a paid solution to broadcast important revocations.
+
+## Flow
+
+A user "binds" its authorization server and one of its resource server, signing
+an order "alias/bind", referencing the public keys and Web domains of both
+parties. It broadcasts its token to both authorization and resource servers.
+
+Following the OAuth 2.0 flow, a client requests a user's authorization server
+for access to certain OAuth 2.0 scope(s). Its client ID is the token-form of a
+order "alias/register" setting its OAuth 2.0 redirect URI and some human
+metadata.
+
+If the user grants access to the client, it signs an order "alias/authorize"
+referencing the client's order "alias/register" and the authorized scopes. The
+order expires 10 minutes later. It then sends it back to the client in its
+token-form via the client's redirect URI.
+
+The client has 10 minutes to request access&refresh tokens to the authorization
+server. When doing so, the authorization server will sign an order
+"alias/access" referencing the user's agreement order. If the client provides a
+X.509 client-side TLS certificate, its SHA256 fingerprint is referenced in it
+too; this order will be serialized as the access token. It also returns an
+opaque value identifying the user's agreement order to release back an access
+token in the future. The authorization servers finally returns the list of
+the keys and domains of the resources servers storing resources of the declared
+scopes.
+
+The client requests the resource server with its access token. If the access
+token references a X.509 certificate, the TLS layer will request the client to
+provides this certificate. If the client has the right credentials, the
+requested resources will be accessed.
+
+### Scopes
+
+A resource server maps its resources to their access scopes (e.g. the scope of
+the full picture file of a photo from Google taken in 2018 will be
+"google.photo[year=2018].full_img"). Alias is agnostic of the resource models.
+An "Alias processor" is a software aware of the model of a set of resources and
+maps each resource to their scope. This mapping is stored in an index and is
+read by the resource server when handling a resource access request.
+
+A Alias processor is packaged in a (Docker) container, spawned on demand when a
+new set of resources is created/modified.
+
+## Security
+
+The security relies on each party being synchronized with the real UTC time. NTP
+is a vector attack of the protocol.
+
+The user asserts the identities of its authorization server and resource
+servers. Its root public key is its global identifier in the Alias ecosystem.
+Bind revocation SHOULD be generated following each bind signatures.
+
+The user's trust in its authorization server is full IF the server stores its
+private key. If not, the protocol asserts it cannot access to unwanted
+resources.
+
+The user's trust in in its resource server is full. Bind revocations is
+effective when all its resource servers acknowledges it received and stored it.
+
+TLS is mandatory. Except for public resources, resources requests are performed
+over a client-side certificate TLS channel.
+
+Default hash is SHA256 (Blake2b?).
+
+Signatures are very similar to JWT's, but
+- implements Ed25519 and SECP256k1
+- the header contains:
+    - the signer public key
+    - if a subkey, the signed order "alias/key"
+- the signed hash is built from the MessagePack serialization and not JSON
+
+
