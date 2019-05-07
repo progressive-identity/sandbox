@@ -83,15 +83,14 @@ server. When doing so, the authorization server will sign an order
 "alias/access" referencing the user's agreement order. If the client provides a
 X.509 client-side TLS certificate, its SHA256 fingerprint is referenced in it
 too; this order will be serialized as the access token. It also returns an
-opaque value identifying the user's agreement order to release back an access
-token in the future. The authorization servers finally returns the list of
-the keys and domains of the resources servers storing resources of the declared
-scopes.
+opaque value as refresh token to identify the user's agreement order. The
+authorization servers finally returns the list of the keys and domains of the
+resources servers storing resources of the declared scopes.
 
-The client requests the resource server with its access token. If the access
-token references a X.509 certificate, the TLS layer will request the client to
-provides this certificate. If the client has the right credentials, the
-requested resources will be accessed.
+The client requests a resource server with its access token. If the access
+token references a X.509 certificate, the client must provide it before
+initiating the HTTPS request's channel. If the client has the right credentials
+and the access token is valid, the requested resources will be accessed.
 
 ### Scopes
 
@@ -112,10 +111,11 @@ is a vector attack of the protocol.
 
 The user asserts the identities of its authorization server and resource
 servers. Its root public key is its global identifier in the Alias ecosystem.
-Bind revocation SHOULD be generated following each bind signatures.
+Bind revocation MUST be signed and stored following each bind signatures in the
+case root key is lost.
 
 The user's trust in its authorization server is full IF the server stores its
-private key. If not, the protocol asserts it cannot access to unwanted
+private key. If not, the protocol asserts it cannot give access to unwanted
 resources.
 
 The user's trust in in its resource server is full. Bind revocations is
