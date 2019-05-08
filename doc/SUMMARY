@@ -25,8 +25,8 @@ secp256k1), called their "root keys".
 
 Orders are contracts to assert decentralizedly that a party agreed with its
 content. It is represented as a JSON-compatible dictionary, with a key 'type'
-specifying its class (e.g. {type: "alias/example": foo: {"bar": [42]}}). Each
-order is uniquely identified by their "root hash", the root hash of the order
+specifying its class (e.g. {type: "alias/example", foo: {"bar": [42]}}). Each
+order is globally identified by their "root hash", the root hash of the order
 casted as a merkle tree (Ethereum's smart-contract flavor). An order is signed
 by a party's root key, or party's subkeys (see "Key rotation"). A order's
 signature stores the signature's date and an optional expiration date.
@@ -42,12 +42,12 @@ An order is valid when (1) it is not expired AND (2) its signature's date is in
 the past.
 
 Tokens are the Base64 form of the MessagePack serialization of orders. Valid
-tokens are valid orders. Only valid tokens are accepted by parties.
+tokens serializes valid orders. Only valid tokens are accepted by parties.
 
 ### Key rotation
 
 A subkey is a pair of asymmetric keys signed by a party's root key. It is
-declared as an order of type "alias/key", signed by the party's root key. They
+declared with an order of type "alias/key", signed by the party's root key. They
 are used to sign every orders except subkeys' and revocations'. A party rotates
 its subkey(s) every hour.
 
@@ -56,9 +56,9 @@ its subkey(s) every hour.
 Orders are revoked by order of type "alias/revoke", referencing the revoked
 order's root hash and signed by the revoked order's root key.
 
-The revoking party perform a best-effort to contact every other concerned
-parties ("revoking" status), until the revocation is known from all of them
-("revoked" status).
+The revoking party perform a best-effort to contact every other affected parties
+("revoking" status), until the revocation is known from all of them ("revoked"
+status).
 
 Blockchains may be used as a paid solution to broadcast important revocations.
 
@@ -88,9 +88,10 @@ authorization servers finally returns the list of the keys and domains of the
 resources servers storing resources of the declared scopes.
 
 The client requests a resource server with its access token. If the access
-token references a X.509 certificate, the client must provide it before
-initiating the HTTPS request's channel. If the client has the right credentials
-and the access token is valid, the requested resources will be accessed.
+token references a X.509 certificate, the client must provide it when
+initializing the HTTPS request's channel. If the client has the right
+credentials and the access token is valid, the requested resources will be
+accessed.
 
 ### Scopes
 
@@ -106,8 +107,8 @@ new set of resources is created/modified.
 
 ## Security
 
-The security relies on each party being synchronized with the real UTC time. NTP
-is a vector attack of the protocol.
+The security relies on each party being synchronized with the real UTC time. The
+time synchronization mechanism is a attack vector.
 
 The user asserts the identities of its authorization server and resource
 servers. Its root public key is its global identifier in the Alias ecosystem.
@@ -115,8 +116,8 @@ Bind revocation MUST be signed and stored following each bind signatures in the
 case root key is lost.
 
 The user's trust in its authorization server is full IF the server stores its
-private key. If not, the protocol asserts it cannot give access to unwanted
-resources.
+private key. If not, the protocol asserts the server cannot forge any access
+token without the consent of the user.
 
 The user's trust in in its resource server is full. Bind revocations is
 effective when all its resource servers acknowledges it received and stored it.
@@ -126,11 +127,10 @@ over a client-side certificate TLS channel.
 
 Default hash is SHA256 (Blake2b?).
 
-Signatures are very similar to JWT's, but
+Signatures are built like JWT, and:
 - implements Ed25519 and SECP256k1
 - the header contains:
     - the signer public key
     - if a subkey, the signed order "alias/key"
 - the signed hash is built from the MessagePack serialization and not JSON
-
 
